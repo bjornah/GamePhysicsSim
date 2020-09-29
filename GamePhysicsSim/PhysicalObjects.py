@@ -1,5 +1,6 @@
 import numpy as np
 import GamePhysicsSim.Utils as Utils
+# import math
 
 class RigidBody():
     '''
@@ -43,11 +44,11 @@ class RigidBody():
         '''
         self.ApplyForce(-self.v*friction)
 
-    def Drag(self,drag=0.1):
+    def Drag(self,Drag=0.1):
         '''
         Note that the drag force is proportional to v^2
         '''
-        self.ApplyForce(-self.v*np.linalg.norm(self.v)*drag) #FIX THIS!
+        self.ApplyForce(-self.v*np.linalg.norm(self.v)*Drag)
 
     def AngularDrag(self,AngularDrag=0.1):
         '''
@@ -63,9 +64,13 @@ class RigidBody():
 
     def DoMove(self,dt):
         self.v = self.v + self.a * dt
+        if any(np.isnan(self.v)):
+            self.v = np.zeros(self.v.shape)
         self.pos = self.pos + self.v * dt #+ self.a * dt**2 / 2.
 
-    def DoRot(self,dt,wMax=None):
+    def DoRot(self,dt):
         self.w = self.w + self.alpha * dt
+        if np.isnan(self.w):
+            self.w = 0
         self.theta = self.theta + self.w * dt # + self.alpha * dt**2 / 2.
         self.theta = self.theta % (2*np.pi)

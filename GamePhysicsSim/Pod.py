@@ -1,8 +1,9 @@
 import numpy as np
 import GamePhysicsSim.Utils as Utils
-import GamePhysicsSim.PhysicalObjects as PO
+from GamePhysicsSim.PhysicalObjects import RigidBody
+from IPython.core.debugger import set_trace
 
-class Pod(PO.RigidBody):
+class Pod(RigidBody):
     '''
     Inherits from RigidBody class. Adds Thurst, Rotate, Turn, and Move functions.
 
@@ -62,29 +63,66 @@ class Pod(PO.RigidBody):
         self.ApplyTorque(Torque)
         self.AngularDrag(AngularDrag)
         self.AngularFriction(AngularFriction)
-        self.DoRot(dt,wMax=self.wMax)
+        self.DoRot(dt)
         if (Torque==0) and (abs(self.w)<self.wMin):
             self.w = 0
         self.alpha = 0
 
+    def StopRotate(self,AngularDrag,AngularFriction,dt):
+        Torque = -self.I * self.w/dt
+        Torque = np.sign(Torque)*min(abs(Torque),self.TorqueMax)
+        self.ApplyTorque(Torque)
+        # self.AngularDrag(AngularDrag)
+        # self.AngularFriction(AngularFriction)
+        self.DoRot(dt)
+        self.alpha = 0
+
+    def Break(self,Drag,Friction,dt):
+        # set_trace()
+        Break = np.linalg.norm(self.v) / dt
+        Break = min(Break,self.ThrustMax)
+        # print(f'self.v = {self.v}')
+        # print(f'type(self.v) = {type(self.v)}')
+        # v = self.v
+        F_Break = -Break * Utils.unit_vector(self.v)
+        self.ApplyForce(F_Break)
+        self.Drag(Drag)
+        self.Friction(Friction)
+        self.DoMove(dt)
+        # if (Thrust==0) and (np.linalg.norm(self.v)<self.vMin):
+            # self.v = np.array([0.,0.])
+        self.a = 0
+
+    # def Turn(self,):
+    #     '''
+    #     To include a simplified way of turning for manual control. Automatically stops rotating once turning action is over
+    #     (not immediately, but will automatically apply StopRotate function, probably).
+    #     '''
+    #     return
+
     def GetSteering(self,pos_dest,delta_t):
         '''
-        Assumes we have a destination in mind, given by 2D vector pos_dest. We limit the max acceleration allowed to ThrustMax and Torque to TorqueMax.
+        Assumes we have a destination in mind, given by 2D vector pos_dest. We limit max acceleration and Torque to ThrustMax and TorqueMax, respectively.
 
         Returns Torque and Thrust to be put into Move and Rotate.
 
-        This steering clearly needs more work. When working with torque rather than angular velocity,
-        or even better just steering forces on a rigid non-turning body, we need something more clever.
+        This steering clearly needs more work. When using with torque rather than angular velocity to control turning we need something more intricate than this.
         '''
         v_desired = (pos_dest - self.pos)/delta_t
         a_required = (v_desired - self.v)/delta_t
         if np.linalg.norm(a_required)>0:
-            theta_required = np.arctan(a_required[0]/a_required[1])
+            # theta_required = np.arctan(a_required[0]/a_required[1])
+            theta_required = Utils.full_angle(a_required,np.array([1,0]))
+            delta_theta = theta_required - self.theta
+            if delta_theta > np.pi:
+                delta_theta = delta_theta - 2*np.pi
+            w_required = delta_theta/delta_t
         else:
             theta_required = self.theta
-        w_required = (theta_required - self.theta)/delta_t
-#         w_required = Utils.signed_angle(a_required,self.v)/delta_t
-        alpha_required = (w_required - self.w)/delta_t
+            w_required = 0
+        # w_required = (theta_required - self.theta)/delta_t
+        delta_w = w_required - self.w
+        alpha_required = delta_w/delta_t
 
         # limit to max allowed values of torque and thrust
         Torque = np.sign(alpha_required)*min(abs(alpha_required*self.I),self.TorqueMax)
@@ -99,11 +137,15 @@ class Pod(PO.RigidBody):
         v_desired = (pos_dest - self.pos)/delta_t
         a_required = (v_desired - self.v)/delta_t
         if np.linalg.norm(a_required)>0:
-            theta_required = Utils.signed_angle(a_required,np.array([1,0])) # np.arctan(a_required[0]/a_required[1])
-            w_required = (theta_required - self.theta)/delta_t
+            theta_required = Utils.full_angle(a_required,np.array([1,0])) # np.arctan(a_required[0]/a_required[1])
+            delta_theta = theta_required - self.theta
+            if delta_theta > np.pi:
+                delta_theta = delta_theta - 2*np.pi
+            w_required = delta_theta/delta_t
         else:
-            theta_required = 0
+            theta_required = self.theta
             w_required = 0
-        delta_w = np.sign(w_required)*min(abs(w_required),wMax)
+        delta_w = w_required - self.w
+        delta_w = np.sign(delta_w)*min(abs(delta_w),wMax)
         self.w = delta_w
-        return v_desired,a_required,w_required,alpha_required
+        return v_desired,a_required,w_required
