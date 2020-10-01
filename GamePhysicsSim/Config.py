@@ -12,7 +12,7 @@ conf = {
 'm_pod' : 50, # kg
 'r_pod' : 0.4, # m
 'TorqueMax' : 10, # N * m : kg * m^2 * s^−2
-'ThrustMax' : 1000, # N : kg * m * s^−2
+'ThrustMax' : 10000, # N : kg * m * s^−2
 'AirDrag' : 0.47, # 0.47 # taken from https://asawicki.info/Mirror/Car%20Physics%20for%20Games/Car%20Physics%20for%20Games.html
 'AngularDrag' : 0.95, # 0.95 # taken from nowhere, the entire concept is flawed as done here. We hope that it looks good enough
 'Friction' : 0.15,
@@ -20,6 +20,8 @@ conf = {
 'vMin' : 10, # a pod slower than this with zero thrust will stop due to static friction
 'wMin' : 0.15, # a pod with angular velocity slower than this with zero torque will stop due to static friction
 'wMax' : 36./360*2*np.pi,
+'v0'   : np.array([0,0]),
+'a0'   : np.array([0,0])
 }
 
 conf['I_pod'] = 0.5 * conf['m_pod'] * conf['r_pod']**2

@@ -6,4 +6,4 @@ import GamePhysicsSim.Pod
 import GamePhysicsSim.Visualise
 import GamePhysicsSim.NN
 import GamePhysicsSim.Config
-import GamePhysicsSim.EvolutionSim
+# import GamePhysicsSim.EvolutionSim

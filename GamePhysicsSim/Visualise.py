@@ -40,8 +40,12 @@ def initiate_animation(imgFile,_DISPLAYSIZE = (800,640), PODSIZE = (40,40)):
     pygame.display.set_caption('Animation')
 
     # Pod
-    podImg = pygame.image.load(imgFile).convert_alpha()
-    podImg = pygame.transform.scale(podImg, PODSIZE)
+    if imgFile == None:
+        podImg = pygame.Surface(PODSIZE)
+        podImg.fill((100,100,255))
+    else:
+        podImg = pygame.image.load(imgFile).convert_alpha()
+        podImg = pygame.transform.scale(podImg, PODSIZE)
 
     return DISPLAYSURF,podImg,fpsClock
 
@@ -50,7 +54,8 @@ def RunManualControl(imgFile,conf):
 
     DISPLAYSURF,podImg,fpsClock = initiate_animation(imgFile,_DISPLAYSIZE = conf['_DISPLAYSIZE'], PODSIZE = conf['PODSIZE'])
     # Initiate Pod
-    pod = PodClass.Pod(pos0 = conf['pod_pos_0'], w0 = 0, v0 = 0, a0 = 0, alpha0 = 0, theta0 = np.pi*1/2.,
+    theta0 = np.pi*1/2.
+    pod = PodClass.Pod(pos0 = conf['pod_pos_0'], w0 = 0, v0 = conf['v0'], a0 = conf['a0'], alpha0 = 0, theta0 = theta0,
                         m=conf['m_pod'], I=conf['I_pod'], TorqueMax = conf['TorqueMax'],
                         ThrustMax = conf['ThrustMax'], vMin = conf['vMin'], wMin = conf['wMin'])
 
@@ -63,7 +68,6 @@ def RunManualControl(imgFile,conf):
 
     while run: # the main game loop
         updateParamsNr += 1
-        theta0 = pod.theta
         pod.Move(Thrust = Thrust, Drag = conf['AirDrag'], Friction = conf['Friction'], dt = conf['dt'])
         pod.Rotate(Torque = Torque, AngularDrag = conf['AngularDrag'], AngularFriction = conf['AngularFriction'], dt = conf['dt'])
 
@@ -120,7 +124,8 @@ def RunMouseControl_w(imgFile,conf):
     DISPLAYSURF,podImg,fpsClock = initiate_animation(imgFile,_DISPLAYSIZE = conf['_DISPLAYSIZE'], PODSIZE = conf['PODSIZE'])
     # Initiate Pod
     pod_pos_0 = conf['pod_pos_0']
-    pod = PodClass.Pod(pos0 = pod_pos_0, w0 = 0, v0 = 0, a0 = 0, alpha0 = 0, theta0 = np.pi*1/2.,
+    theta0 = np.pi*1/2.
+    pod = PodClass.Pod(pos0 = pod_pos_0, w0 = 0, v0 = conf['v0'], a0 = conf['a0'], alpha0 = 0, theta0 = theta0,
                         m=conf['m_pod'], I=conf['I_pod'], TorqueMax = conf['TorqueMax'],
                         ThrustMax = conf['ThrustMax'], vMin = conf['vMin'], wMin = conf['wMin'])
 
@@ -191,7 +196,8 @@ def RunMouseControl_torqueSteer(imgFile,conf):
     DISPLAYSURF,podImg,fpsClock = initiate_animation(imgFile,_DISPLAYSIZE = conf['_DISPLAYSIZE'], PODSIZE = conf['PODSIZE'])
     # Initiate Pod
     pod_pos_0 = conf['pod_pos_0']
-    pod = PodClass.Pod(pos0 = pod_pos_0, w0 = 0, v0 = 0, a0 = 0, alpha0 = 0, theta0 = np.pi*1/2.,
+    theta0 = np.pi*1/2.
+    pod = PodClass.Pod(pos0 = pod_pos_0, w0 = 0, v0 = conf['v0'], a0 = conf['a0'], alpha0 = 0, theta0 = theta0,
                         m=conf['m_pod'], I=conf['I_pod'], TorqueMax = conf['TorqueMax'],
                         ThrustMax = conf['ThrustMax'], vMin = conf['vMin'], wMin = conf['wMin'])
 
@@ -228,7 +234,6 @@ def RunMouseControl_torqueSteer(imgFile,conf):
                 pod.StopRotate(conf['AngularDrag'],conf['AngularFriction'],conf['dt']) # extra step to make steering more robust
                 (Torque,Thrust),(v_desired,a_required,w_required,alpha_required) = pod.GetSteering(pos_click,conf['delta_t'])
 
-            theta0 = pod.theta
             dist = np.linalg.norm(pod.pos - pos_click)
             Thrust = conf['ThrustMax'] * np.clip(np.arctan((dist-20)/200),0,1)
             pod.Rotate(Torque = Torque, AngularDrag = conf['AngularDrag'], AngularFriction = conf['AngularFriction'], dt = conf['dt'])

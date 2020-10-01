@@ -19,6 +19,8 @@ class Pod(RigidBody):
         self.wMax      = wMax
         self.wMin      = wMin
         self.vMin      = vMin
+        self.dest      = None
+        self.ID        = id(self)
 
     def ApplyThrust(self,Thrust):
         '''
@@ -149,3 +151,23 @@ class Pod(RigidBody):
         delta_w = np.sign(delta_w)*min(abs(delta_w),wMax)
         self.w = delta_w
         return v_desired,a_required,w_required
+
+    def setDest(self,dest):
+        self.dest = dest
+
+    def NN_getSteering(self,model):
+        vx,vy           = self.v
+        w               = self.w
+        theta           = self.theta
+        try:
+            delta_x,delta_y = self.dest - self.pos
+        except TypeError:
+            print(f'pod {self.ID} appears to be missing a destination. Do not forget to set ut using pod.setDest(dest)', sys.exc_info()[0])
+        # Thrust, Torque = func(vx,vy,w,delta_x,delta_y,theta)
+        Thrust,Torque
+        ####
+        # obviously remove this
+        Thrust = np.random.uniform(50,500)
+        Torque = np.random.uniform(-0.5,0.5)
+        ####
+        return Thrust,Torque
