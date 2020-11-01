@@ -27,65 +27,52 @@ AngularFriction = conf['AngularFriction']
 Drag = conf['AirDrag']
 Friction = conf['Friction']
 
-N = 5 # number of pods
-M = 6 # number of checkpoints
+N = 10 # number of pods
+M = 10 # number of checkpoints
 
 # Sizes
-X = 800
-Y = 800
+X = 1000
+Y = 1000
 PODSIZE = (30,30)
 CheckPointSize = 15
 
 # create checkpoints
-CheckGen = zip(np.random.randint(X,size=M),np.random.randint(Y,size=M))
-checkpointList = [np.array(c) for c in CheckGen]
+# CheckGen = zip(np.random.randint(X,size=M),np.random.randint(Y,size=M))
+# checkpointList = [np.array(c) for c in CheckGen]
 
-
-# Initiate Pod
-# either use these options to generate pods with identical initial conditions, or set them further down to get unique settings for each pod (only for testing purposes)
-# pod_pos_0 = np.array([np.random.randint(X),np.random.randint(Y)]) # random starting position
-# theta0 = 3/2 * np.pi
-podList = []
-IDList = []
-K0 = 60
-f0 = 0.07
-Kp = K0 * 0.6
-Ki = 35 * Kp * f0
-Kd = Kp / (8*f0)
-# Kp = 10
-# Ki = 2 * Kp * f0
-# Kd = Kp / (8*f0)
-for i in range(N):
-    pod_pos_0 = np.array([np.random.randint(X),np.random.randint(Y)])
-    theta0 = np.random.uniform(0,2*np.pi)
-    pod = PodClass.Pod(pos0 = pod_pos_0, w0 = 0, v0 = conf['v0'], a0 = conf['a0'], alpha0 = 0, theta0 = theta0,
-                        m=conf['m_pod'], I=conf['I_pod'], TorqueMax = conf['TorqueMax'],
-                        ThrustMax = conf['ThrustMax'], vMin = conf['vMin'], wMin = conf['wMin'])
-    pod.PID_init(Kp,Ki,Kd)
-    podList.append(pod)
-    IDList.append(pod.ID)
-
-# TorqueMax = conf['TorqueMax']
-# ThrustMax = conf['ThrustMax']
-# print(f'TorqueMax = {TorqueMax}')
-# print(f'ThrustMax = {ThrustMax}')
-
-# initiate the first checkpoint for each pod:
-for pod in podList:
-    pod.setDest(checkpointList[0])
-
-# initiate dict for fitnessScores
 fitness = {}
-for pod in podList:
-    fitness[pod.ID] = [0]
+IDList = []
+checkpointList = []
 
-# # compile a NN model for each pod
-# for pod in podList:
-#     pod.model = NN.BuildAndCompileModel()
+def reset_lists(IDList,fitness):
+    fitness.clear()
+    IDList[:] = []
+    checkpointList[:] = []
 
-# Set initial steering parameters
-ThrustVec = np.zeros(N)
-TorqueVec = np.zeros(N)
+def initiate_pods(modelList):
+    # Initiate Pod
+    pod_pos_0 = np.array([np.random.randint(X),np.random.randint(Y)]) # random starting position
+    theta0 = 3/2 * np.pi
+    for model in modelList:
+        pod = PodClass.Pod(pos0 = pod_pos_0, w0 = 0, v0 = conf['v0'], a0 = conf['a0'], alpha0 = 0, theta0 = theta0,
+                            m=conf['m_pod'], I=conf['I_pod'], TorqueMax = conf['TorqueMax'],
+                            ThrustMax = conf['ThrustMax'], vMin = conf['vMin'], wMin = conf['wMin'])
+        podList.append(pod)
+        IDList.append(pod.ID)
+        pod.model = model
+
+    # initiate dict for fitnessScores
+    for pod in podList:
+        fitness[pod.ID] = [0]
+
+    return podList
+
+def setCheckpoints():
+    CheckGen = zip(np.random.randint(X,size=M),np.random.randint(Y,size=M))
+    checkpointList[:] = [np.array(c) for c in CheckGen]
+    # initiate the first checkpoint for each pod:
+    for pod in podList:
+        pod.setDest(checkpointList[0])
 
 # in case you want to watch the result:
 imgFile = '/Users/bjornahlgren/Documents/Privat/Projects/codingames/csb/SpaceShip2.png'

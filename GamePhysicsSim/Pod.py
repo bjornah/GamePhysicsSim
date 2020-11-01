@@ -2,6 +2,7 @@ import numpy as np
 import GamePhysicsSim.Utils as Utils
 from GamePhysicsSim.PhysicalObjects import RigidBody
 from IPython.core.debugger import set_trace
+from simple_pid import PID
 
 class Pod(RigidBody):
     '''
@@ -12,15 +13,22 @@ class Pod(RigidBody):
     delta_t indicates the time scale during which we consider input forces to be constant (e.g. user input in terms of Thrust and Torque)
     '''
 
-    def __init__(self, TorqueMax=1, ThrustMax=100, wMax=None, wMin = 0.1, vMin = 0.1, *args, **kwargs):
+    def __init__(self, TorqueMax=1, ThrustMax=100, wMax=None, wMin = 0.1, vMin = 0.1, dest = None, model = None, podpatch = None,
+                destLine = None, velLine = None, accLine = None, *args, **kwargs):
         super(Pod, self).__init__(*args, **kwargs)
         self.ThrustMax = ThrustMax
         self.TorqueMax = TorqueMax
         self.wMax      = wMax
         self.wMin      = wMin
         self.vMin      = vMin
-        self.dest      = None
+        self.dest      = dest
         self.ID        = id(self)
+        self.model     = model
+        self.podpatch  = podpatch
+        self.destLine  = destLine
+        self.velLine   = velLine
+        self.accLine   = accLine
+        self.pid       = None
 
     def ApplyThrust(self,Thrust):
         '''
@@ -115,15 +123,21 @@ class Pod(RigidBody):
         if np.linalg.norm(a_required)>0:
             # theta_required = np.arctan(a_required[0]/a_required[1])
             theta_required = Utils.full_angle(a_required,np.array([1,0]))
-            delta_theta = theta_required - self.theta
+            delta_theta = theta_required - self.theta #- self.w*delta_t # this last term accounts for the fact that we will soon rotate
             if delta_theta > np.pi:
                 delta_theta = delta_theta - 2*np.pi
             w_required = delta_theta/delta_t
         else:
             theta_required = self.theta
+            delta_theta = 0.0001 # to avoid division by zero
             w_required = 0
-        # w_required = (theta_required - self.theta)/delta_t
+
         delta_w = w_required - self.w
+        # print(delta_w)
+
+        # if (self.w*delta_t/1./delta_theta<1):# and (self.w*delta_t/1./delta_theta>0):
+            # alpha_required = 0
+        # else:
         alpha_required = delta_w/delta_t
 
         # limit to max allowed values of torque and thrust
@@ -131,6 +145,33 @@ class Pod(RigidBody):
         Thrust = min(np.linalg.norm(a_required)*self.m,self.ThrustMax)
 
         return (Torque,Thrust),(v_desired,a_required,w_required,alpha_required) # apply acceleration and torque accordingly
+
+    def PID_init(self,Kp,Ki,Kd):
+        pid = PID(Kp, Ki, Kd, setpoint=0)
+        pid.output_limits = (-self.TorqueMax, self.TorqueMax)
+        self.pid = pid
+
+    def GetSteering_PID(self,pos_dest,delta_t):
+        '''
+        Assumes we have a destination in mind, given by 2D vector pos_dest. We limit max acceleration and Torque to ThrustMax and TorqueMax, respectively.
+
+        Returns Torque and Thrust to be put into Move and Rotate.
+
+        This steering clearly needs more work. When using with torque rather than angular velocity to control turning we need something more intricate than this.
+        '''
+        v_desired = (pos_dest - self.pos)/delta_t
+        a_required = (v_desired - self.v)/delta_t
+        if np.linalg.norm(a_required)>0:
+            theta_required = Utils.full_angle(a_required,np.array([1,0]))
+            delta_theta = theta_required - self.theta
+            # delta_theta = self.theta - theta_required #- self.w*delta_t # this last term accounts for the fact that we will soon rotate
+            if delta_theta > np.pi:
+                delta_theta = delta_theta - 2*np.pi
+        # delta_theta = delta_theta/np.pi
+        Torque = -self.pid(delta_theta,delta_t)
+        # print(f'delta_theta = {delta_theta}\nTorque = {Torque}')
+
+        return Torque,(v_desired,a_required) # apply torque accordingly
 
     def GetSteering_w(self,pos_dest,delta_t,wMax):
         '''
@@ -155,19 +196,33 @@ class Pod(RigidBody):
     def setDest(self,dest):
         self.dest = dest
 
-    def NN_getSteering(self,model):
+    def getPodSteeringStats(self,delta_t):
         vx,vy           = self.v
         w               = self.w
         theta           = self.theta
         try:
             delta_x,delta_y = self.dest - self.pos
+            v_desired = (self.dest - self.pos)/delta_t
+            a_required = (v_desired - self.v)/delta_t
+            if np.linalg.norm(a_required)>0:
+                theta_required = Utils.full_angle(a_required,np.array([1,0]))
+                delta_theta = theta_required - self.theta
+                if delta_theta > np.pi:
+                    delta_theta = delta_theta - 2*np.pi
+            else:
+                delta_theta = 0
         except TypeError:
             print(f'pod {self.ID} appears to be missing a destination. Do not forget to set ut using pod.setDest(dest)', sys.exc_info()[0])
-        # Thrust, Torque = func(vx,vy,w,delta_x,delta_y,theta)
-        Thrust,Torque
-        ####
-        # obviously remove this
-        Thrust = np.random.uniform(50,500)
-        Torque = np.random.uniform(-0.5,0.5)
-        ####
+        return np.array([vx,vy,w,theta,delta_x,delta_y,delta_theta])
+
+
+    def NN_getSteering(self,x,model=None):
+        '''
+        Returns Thrust and TorqueMax given current velocity, position and angle relative to the destination, and angular velocity
+        Requires uncompiled model. This is a factor of ~30 faster than predicting for a singe data point using a compiled model
+        '''
+        if model==None:
+            model = self.model
+        Thrust,Torque = model(x)[0]
+
         return Thrust,Torque

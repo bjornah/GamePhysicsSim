@@ -3,7 +3,7 @@ import numpy as np
 conf = {
 # Clock and FPS
 'FPS' : 20, # frames per second setting
-'_DISPLAYSIZE' : (800,800),
+'_DISPLAYSIZE' : (800,640),
 # Colors
 'WHITE' : (255, 255, 255),
 # Pod
