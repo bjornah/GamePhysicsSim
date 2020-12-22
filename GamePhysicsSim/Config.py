@@ -21,7 +21,8 @@ conf = {
 'wMin' : 0.15, # a pod with angular velocity slower than this with zero torque will stop due to static friction
 'wMax' : 36./360*2*np.pi,
 'v0'   : np.array([0,0]),
-'a0'   : np.array([0,0])
+'a0'   : np.array([0,0]),
+'imgFile1' : '/Users/bjornah/Documents/Privat/Projects/codingames/csb/SpaceShip2.png'
 }
 
 conf['I_pod'] = 0.5 * conf['m_pod'] * conf['r_pod']**2
