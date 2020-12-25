@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # basic imports
 import numpy as np
 import sys
@@ -19,7 +20,7 @@ from IPython.core.debugger import set_trace
 import GamePhysicsSim.Utils as Utils
 import GamePhysicsSim.Pod as PodClass
 from GamePhysicsSim.Config import conf
-import GamePhysicsSim.Visualise as Visualise
+#import GamePhysicsSim.Visualise as Visualise
 import GamePhysicsSim.NN as NN
 # from GamePhysicsSim.Utils import profile
 
@@ -46,7 +47,7 @@ AngularDrag = conf['AngularDrag']
 AngularFriction = conf['AngularFriction']
 Drag = conf['AirDrag']
 Friction = conf['Friction']
-N = 10 # number of pods
+N = 12 # number of pods
 M = 8 # number of checkpoints
 # Sizes
 X = 800
@@ -110,9 +111,11 @@ def update(t):
         pod.Rotate(Torque = pod.Torque, AngularDrag = AngularDrag, AngularFriction = AngularFriction, dt = dt)
         pod.Move(Thrust = pod.Thrust, Drag = Drag, Friction = Friction, dt = dt)
         if CheckPointCheck(pod,CheckPointSize):
-            doneCheckPoints = 1+(math.ceil(pod.fitnessScore) % M )
-            pod.setDest(checkpointList[doneCheckPoints])
-            pod.fitnessScore = doneCheckPoints - Utils.sigmoid(t/tMax)
+            # doneCheckPoints = 1+(math.ceil(pod.fitnessScore) % M )
+            pod.doneCheckpoints += 1
+            pod.setDest(checkpointList[(pod.doneCheckpoints % M)])
+            # pod.setDest(checkpointList[doneCheckPoints])
+            # pod.doneCheckpoints += 1 #= doneCheckPoints - Utils.sigmoid(t/tMax)
         pod.podpatch.center = tuple(pod.pos)
         FT = np.array([pod.Thrust*np.cos(pod.theta),pod.Thrust*np.sin(pod.theta)])*dt**2
         pod.accLine.set_data([pod.pos[0],pod.pos[0]+FT[0]],[pod.pos[1],pod.pos[1]+FT[1]])
@@ -172,13 +175,15 @@ def runSim(gen,modNr,savepath):
     # writergif = animation.PillowWriter(fps=30)
     writervideo = animation.FFMpegWriter(fps=30)
     anim = FuncAnimation(fig,update,frames = t)
-    # anim.save(f'{savepath}Model{modNr}_Gen{gen}.mp4',fps = 30)
-    anim.save(f'{savepath}Model{modNr}_Gen{gen}.mp4', writer=writervideo)
+    # set_trace()
+    anim.save(savepath+'/Model'+str(modNr)+'_Gen'+str(gen)+'.mp4', writer=writervideo)
 
-# @profile(output_file='saveChildren',sort_by='cumulative', lines_to_print=10, strip_dirs=True)
+
 def saveChildren(children,savepath,gen,modNr):
     for j,child in enumerate(children):
-        child.save(f'{savepath}/Model{modNr}_Gen{gen}_{j}')
+        child.save(savepath+'/Model'+str(modNr)+'_Gen'+str(gen)+'_'+str(j))
+
+profile=False
 
 dt = 0.05
 delta_t = 0.1
@@ -188,38 +193,40 @@ IDList = []
 checkpointList = []
 podList = []
 
-savepath = '/Users/bjornah/Documents/Privat/Projects/codingames/csb/Models/conf1/'
+savepath = '/home/bjornah/Projects/GPE/csb/Models/conf1'
 modNr = 5
 gen_0 = 0
 
-scalerPath = '/Users/bjornah/Documents/Privat/Projects/codingames/csb/DataScalers/scaler_Model5.pkl'
+scalerPath = '/home/bjornah/Projects/GPE/csb/DataScalers/scaler_Model5.pkl'
 scaler = pickle.load(open(scalerPath, 'rb'))
 
 # initialise models
-model_0 = keras.models.load_model(f'{savepath}/Model{modNr}_Gen{gen_0}',compile=False)
-GA = GeneticAlgorithm(model_0, population_size = N, selection_rate = 0.2, mutation_rate = 0.05)
-population = GA.initial_population()
+model_0 = keras.models.load_model(savepath+'/Model'+str(modNr)+'_Gen'+str(gen_0),compile=False)
+GA = GeneticAlgorithm(model_0, population_size = N, selection_rate = 0.2, mutation_rate = 0.1)
+# population = GA.initial_population()
 # set_trace()
 
 modelList = []
 for i in range(N):
-    model = keras.models.load_model(f'{savepath}/Model{modNr}_Gen{gen_0}',compile=False)
+    # model = keras.models.load_model(f'{savepath}/Model{modNr}_Gen{gen_0}',compile=False)
     # model = keras.models.clone_model(model0)
+    if i==0:
+        model = model_0
     if i>0:
-        model.set_weights(population[i])
-    # if i>0:
-        # model = NN.PerturbModelWeights(model, epsilon = 0.2)
+        model = NN.PerturbModelWeights(model_0, epsilon = 0.2)
+
     modelList.append(model)
 # saveChildren(modelList,savepath,gen_0,modNr)
 
 
 ################## profiling
-pr = cProfile.Profile()
-pr.enable()
+if profile==True:
+    pr = cProfile.Profile()
+    pr.enable()
 
-generations = 10
+generations = 100
 generateCheckpoints()
-for gen in range(1,generations):
+for gen in range(1,generations+1):
     reset_lists()
     initiate_pods(modelList)
     if gen%5==0:
@@ -232,6 +239,7 @@ for gen in range(1,generations):
     population = []
     scores = []
     for pod in podList:
+        pod.fitnessScore = pod.doneCheckpoints + (1 - min(1, np.linalg.norm(pod.dest - pod.pos) / (np.sqrt(X**2 + Y**2)/2) ))
         population.append(pod.model.get_weights())
         scores.append(pod.fitnessScore)
 
@@ -253,17 +261,19 @@ for gen in range(1,generations):
     new_population = GA.mutation(base_offsprings)
 
     next_generation_models = NN.GetNextGeneration(new_population = new_population, input_shape = (6,))
-    saveChildren(next_generation_models,savepath,gen,modNr)
+    if (gen%10) == 0:
+        saveChildren(next_generation_models,savepath,gen,modNr)
     modelList = next_generation_models
 
-pr.disable()
-s = io.StringIO()
-sortby = SortKey.CUMULATIVE
-ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-ps.print_stats()
-# print(s.getvalue())
-with open('profile.txt','w') as fo:
-    fo.write(s.getvalue())
+if profile==True:
+    pr.disable()
+    s = io.StringIO()
+    sortby = SortKey.CUMULATIVE
+    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+    ps.print_stats()
+    # print(s.getvalue())
+    with open('profile.txt','w') as fo:
+        fo.write(s.getvalue())
 ##################
 
 print('done with all generations')

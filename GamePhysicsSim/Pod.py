@@ -31,6 +31,7 @@ class Pod(RigidBody):
         self.pid       = None
         self.Thrust    = 0
         self.Torque    = 0
+        self.doneCheckpoints = 0
         self.fitnessScore = 0
 
     def ApplyThrust(self,Thrust):

@@ -68,18 +68,18 @@ def LoadUncompiledModel(modelpath):
 #     middleChild.set_weights(childWeights)
 #     return middleChild
 
-# def PerturbModelWeights(model, epsilon = 0.1):
-#     '''
-#     returns model with added stochastic perturbations of scale epsilon to all weights
-#     '''
-#     weights = model.get_weights()
-#     perturbedWeights = []
-#     for wi in weights:
-#         sigma = np.sqrt(np.var(wi)*epsilon)
-#         noise = np.random.normal(0, sigma, wi.shape)
-#         perturbedWeights.append(wi + noise)
-#     model.set_weights(perturbedWeights)
-#     return model
+def PerturbModelWeights(model, epsilon = 0.1):
+    '''
+    returns model with added stochastic perturbations of scale epsilon to all weights
+    '''
+    weights = model.get_weights()
+    perturbedWeights = []
+    for wi in weights:
+        sigma = np.sqrt(np.var(wi)*epsilon)
+        noise = np.random.normal(0, sigma, wi.shape)
+        perturbedWeights.append(wi + noise)
+    model.set_weights(perturbedWeights)
+    return model
 
 # def GetNextGeneration(parentModels, NrChildren, input_shape, Mating=False, epsilon = 0.1):
 #     children = []
