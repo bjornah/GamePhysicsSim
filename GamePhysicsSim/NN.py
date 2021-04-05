@@ -29,6 +29,15 @@ import GamePhysicsSim.Utils as Utils
 #                   metrics=['accuracy'])
 #     return model
 
+def GetNextGeneration(new_population, input_shape):
+    next_generation_models = []
+    for weights in new_population:
+        child = CreateEmptyModelShell(input_shape)
+        child.set_weights(weights)
+        next_generation_models.append(child)
+    return next_generation_models
+
+
 def CreateEmptyModelShell(input_shape):
     model = keras.Sequential([
     keras.layers.Flatten(input_shape=input_shape),
@@ -41,18 +50,23 @@ def CreateEmptyModelShell(input_shape):
 def LoadUncompiledModel(modelpath):
     return keras.models.load_model(modelpath,compile=False)
 
-def MateModels(parentModels,input_shape):
-    '''
-    returns a model where the weights are the average of the weights from parentModels. It is assumed that all models share the same structure.
-    '''
-    parentWeights = [mod.get_weights() for mod in parentModels]
-    childWeights = []
-    for w_i_list in zip(*parentWeights):
-        w_i_child = (np.sum(w_i_list,axis=0))/float(len(w_i_list))
-        childWeights.append(w_i_child)
-    middleChild = CreateEmptyModelShell(input_shape)
-    middleChild.set_weights(childWeights)
-    return middleChild
+
+# the following three functions are obsolete and replaced by the "GeneticAlgorithm" package. I think these functions did a poor imitation of a genetic algorithm.  They are kept here for now in order to help sort of legacy code elsewhere. To be removed in the future.
+
+############################################################################################################
+
+# def MateModels(parentModels,input_shape):
+#     '''
+#     returns a model where the weights are the average of the weights from parentModels. It is assumed that all models share the same structure.
+#     '''
+#     parentWeights = [mod.get_weights() for mod in parentModels]
+#     childWeights = []
+#     for w_i_list in zip(*parentWeights):
+#         w_i_child = (np.sum(w_i_list,axis=0))/float(len(w_i_list))
+#         childWeights.append(w_i_child)
+#     middleChild = CreateEmptyModelShell(input_shape)
+#     middleChild.set_weights(childWeights)
+#     return middleChild
 
 def PerturbModelWeights(model, epsilon = 0.1):
     '''
@@ -67,27 +81,29 @@ def PerturbModelWeights(model, epsilon = 0.1):
     model.set_weights(perturbedWeights)
     return model
 
-def GetNextGeneration(parentModels, NrChildren, input_shape, Mating=False, epsilon = 0.1):
-    children = []
-    if Mating:
-        middleChild = MateModels(parentModels)
-        for i in range(NrChildren):
-            child = keras.models.clone_model(middleChild)
-            child.set_weights(middleChild.get_weights())
-            child = PerturbModelWeights(child, epsilon = epsilon)
-            children.append(child)
-    else:
-        for parent in parentModels:
-            child = CreateEmptyModelShell(input_shape)
-            child.set_weights(parent.get_weights())
-            children.append(child)
-        while len(children)<NrChildren:
-            for parent in parentModels:
-                child = CreateEmptyModelShell(input_shape)
-                child.set_weights(parent.get_weights())
-                child = PerturbModelWeights(child, epsilon = epsilon)
-                children.append(child)
-    return children
+# def GetNextGeneration(parentModels, NrChildren, input_shape, Mating=False, epsilon = 0.1):
+#     children = []
+#     if Mating:
+#         middleChild = MateModels(parentModels)
+#         for i in range(NrChildren):
+#             child = keras.models.clone_model(middleChild)
+#             child.set_weights(middleChild.get_weights())
+#             child = PerturbModelWeights(child, epsilon = epsilon)
+#             children.append(child)
+#     else:
+#         for parent in parentModels:
+#             child = CreateEmptyModelShell(input_shape)
+#             child.set_weights(parent.get_weights())
+#             children.append(child)
+#         while len(children)<NrChildren:
+#             for parent in parentModels:
+#                 child = CreateEmptyModelShell(input_shape)
+#                 child.set_weights(parent.get_weights())
+#                 child = PerturbModelWeights(child, epsilon = epsilon)
+#                 children.append(child)
+#     return children
+
+############################################################################################################
 
 def plot_loss(history):
     fig,ax = plt.subplots()

@@ -88,7 +88,7 @@ ThrustVec = np.zeros(N)
 TorqueVec = np.zeros(N)
 
 # in case you want to watch the result:
-imgFile = '/Users/bjornahlgren/Documents/Privat/Projects/codingames/csb/SpaceShip2.png'
+imgFile = conf['imgFile1']
 
 # Clock and FPS
 fpsClock = pygame.time.Clock()
@@ -131,7 +131,7 @@ while t<tMax: # the main game loop
         else:
             ThrustGauge = np.clip(np.cos(thetaDiff),0,1)
         ThrustGauge = ThrustGauge * Utils.sigmoid(dist/300.) * np.clip((dist+30)/300.,0,1)
-        print(f'dist = {dist}')
+        # print(f'dist = {dist}')
         Thrust = conf['ThrustMax'] * ThrustGauge
         # Thrust = 0
         # print(Torque)

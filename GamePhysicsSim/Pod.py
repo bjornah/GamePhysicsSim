@@ -29,6 +29,10 @@ class Pod(RigidBody):
         self.velLine   = velLine
         self.accLine   = accLine
         self.pid       = None
+        self.Thrust    = 0
+        self.Torque    = 0
+        self.doneCheckpoints = 0
+        self.fitnessScore = 0
 
     def ApplyThrust(self,Thrust):
         '''
@@ -225,5 +229,6 @@ class Pod(RigidBody):
         if model==None:
             model = self.model
         Thrust,Torque = model(x)[0]
-
-        return Thrust,Torque
+        self.Thrust = Thrust
+        self.Torque = Torque
+        # return Thrust,Torque
