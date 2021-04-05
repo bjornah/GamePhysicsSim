@@ -199,7 +199,7 @@ class Pod(RigidBody):
     def getPodSteeringStats(self,delta_t):
         vx,vy           = self.v
         w               = self.w
-        theta           = self.theta
+        # theta           = self.theta
         try:
             delta_x,delta_y = self.dest - self.pos
             v_desired = (self.dest - self.pos)/delta_t
@@ -213,7 +213,8 @@ class Pod(RigidBody):
                 delta_theta = 0
         except TypeError:
             print(f'pod {self.ID} appears to be missing a destination. Do not forget to set ut using pod.setDest(dest)', sys.exc_info()[0])
-        return np.array([vx,vy,w,theta,delta_x,delta_y,delta_theta])
+        # return np.array([vx,vy,w,theta,delta_x,delta_y,delta_theta])
+        return np.array([vx,vy,w,delta_x,delta_y,delta_theta])
 
 
     def NN_getSteering(self,x,model=None):

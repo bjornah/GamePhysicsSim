@@ -29,7 +29,7 @@ import GamePhysicsSim.Utils as Utils
 #                   metrics=['accuracy'])
 #     return model
 
-def CreateEmptyModelShell(input_shape=(7,)):
+def CreateEmptyModelShell(input_shape):
     model = keras.Sequential([
     keras.layers.Flatten(input_shape=input_shape),
     keras.layers.Dense(units=64,kernel_regularizer=keras.regularizers.l2(0.1), activation='relu'),
@@ -41,7 +41,7 @@ def CreateEmptyModelShell(input_shape=(7,)):
 def LoadUncompiledModel(modelpath):
     return keras.models.load_model(modelpath,compile=False)
 
-def MateModels(parentModels):
+def MateModels(parentModels,input_shape):
     '''
     returns a model where the weights are the average of the weights from parentModels. It is assumed that all models share the same structure.
     '''
@@ -50,7 +50,7 @@ def MateModels(parentModels):
     for w_i_list in zip(*parentWeights):
         w_i_child = (np.sum(w_i_list,axis=0))/float(len(w_i_list))
         childWeights.append(w_i_child)
-    middleChild = CreateEmptyModelShell()
+    middleChild = CreateEmptyModelShell(input_shape)
     middleChild.set_weights(childWeights)
     return middleChild
 
@@ -67,7 +67,7 @@ def PerturbModelWeights(model, epsilon = 0.1):
     model.set_weights(perturbedWeights)
     return model
 
-def GetNextGeneration(parentModels, NrChildren, Mating=False, epsilon = 0.1):
+def GetNextGeneration(parentModels, NrChildren, input_shape, Mating=False, epsilon = 0.1):
     children = []
     if Mating:
         middleChild = MateModels(parentModels)
@@ -78,12 +78,12 @@ def GetNextGeneration(parentModels, NrChildren, Mating=False, epsilon = 0.1):
             children.append(child)
     else:
         for parent in parentModels:
-            child = CreateEmptyModelShell()
+            child = CreateEmptyModelShell(input_shape)
             child.set_weights(parent.get_weights())
             children.append(child)
         while len(children)<NrChildren:
             for parent in parentModels:
-                child = CreateEmptyModelShell()
+                child = CreateEmptyModelShell(input_shape)
                 child.set_weights(parent.get_weights())
                 child = PerturbModelWeights(child, epsilon = epsilon)
                 children.append(child)

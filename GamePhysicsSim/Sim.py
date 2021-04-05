@@ -176,7 +176,7 @@ savepath = '/Users/bjornahlgren/Documents/Privat/Projects/codingames/csb/Models/
 modNr = 5
 gen = 0
 
-scalerPath = '/Users/bjornahlgren/Documents/Privat/Projects/codingames/csb/DataScalers/scaler_Model1.pkl'
+scalerPath = '/Users/bjornahlgren/Documents/Privat/Projects/codingames/csb/DataScalers/scaler_Model5.pkl'
 scaler = pickle.load(open(scalerPath, 'rb'))
 
 # set_trace()
@@ -186,7 +186,8 @@ for i in range(N):
     model = keras.models.load_model(f'{savepath}/Model{modNr}_Gen{gen}',compile=False)
     # model = keras.models.clone_model(model0)
     # model.set_weights(model0.get_weights())
-    model = NN.PerturbModelWeights(model, epsilon = 0.1)
+    if i>0:
+        model = NN.PerturbModelWeights(model, epsilon = 0.2)
     modelList.append(model)
 
 generations = 10
@@ -198,7 +199,7 @@ for gen in range(1,generations):
         checkpointList[:] = []
         generateCheckpoints()
     setCheckpoints()
-
+    print('simulation starts')
     runSim(gen,modNr,savepath)
 
     fitnessScore = calculateFitness(fitness,tMax)
@@ -216,6 +217,6 @@ for gen in range(1,generations):
     parents.append(np.random.choice(podList[:-2])) # also take a random pod from the remaining pods
     parentModels = [pod.model for pod in parents]
 
-    children = NN.GetNextGeneration(parentModels = parentModels, NrChildren = N, Mating=False, epsilon = 0.2)
+    children = NN.GetNextGeneration(parentModels = parentModels, NrChildren = N, input_shape = (6,), Mating=False, epsilon = 0.2)
     saveChildren(children,savepath,gen,modNr)
     modelList = children
