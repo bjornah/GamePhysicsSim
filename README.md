@@ -71,7 +71,7 @@ GamePhysicsSim/
     - Award fitness score based on number of reached check points and time stamp of latest check point.
     - Use genetic algorithm to evolve successful NNs.
         - I don't understand how improvement can be achieved reliably if weights are mutated randomly or mixed between different NNs, but I have seen examples that suggest this works. Not sure my case is homomorphic to theirs. This is something I should examine further.
-    - Reinforcement learning?
+    - Reinforcement learning is frankly probably more likely to work than a GA and looks like an exciting prospect.
 - What I perceive to be one of the possible major advantages of a non-gradient based solution is that you can train on all sorts of irregular conditions, like including collisions or other actors, without necessarily having to redefine the metric (and, I believe, in cases where you might not be able to define a good metric for gradient based methods).
 
 - Train NN from scratch with gradient based methods.
@@ -85,8 +85,11 @@ GamePhysicsSim/
 
 ### TO DO:
 - [] Clean up significantly in code (refactor from ground up).
+- [] Add non-pygame based visualisation of NN run
+- [] Add Visualisation example to GitHub front page
+- [] Add tests.
 - [] Change name.
-- []
+- [] Test out auto sklearn for a more optimised NN architecture and hyperparameters
 
 ### Done:
 - [x] Move entire project into this module.

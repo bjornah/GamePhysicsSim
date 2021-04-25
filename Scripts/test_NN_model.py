@@ -29,7 +29,7 @@ training_data_dir = os.path.join(ROOT_DIR,f'Models/{confdir}/TrainingData')
 data_scaler_path = os.path.join(ROOT_DIR,f'Models/{confdir}/DataScalers')
 model_save_path = os.path.join(ROOT_DIR,f'Models/{confdir}')
 
-mod_file = os.path.join(model_save_path,'Model_Gen0')
+mod_file = os.path.join(model_save_path,'Model1_Gen0')
 
 model1 = keras.models.load_model(mod_file,compile=True)
 model1_nc = keras.models.load_model(mod_file,compile=False)

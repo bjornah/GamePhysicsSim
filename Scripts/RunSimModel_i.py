@@ -4,22 +4,23 @@ import numpy as np
 import sys
 import pickle
 import math
+import os
 
 import cProfile, pstats, io
 from pstats import SortKey
-
 
 # visualisation
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib import animation
+
 # debugging
 from IPython.core.debugger import set_trace
 
-# from my own package
+# from GamePhysicsSim
 import GamePhysicsSim.Utils as Utils
 import GamePhysicsSim.Pod as PodClass
-from GamePhysicsSim.Config import conf
+from GamePhysicsSim.Config import conf,ROOT_DIR
 #import GamePhysicsSim.Visualise as Visualise
 import GamePhysicsSim.NN as NN
 # from GamePhysicsSim.Utils import profile
@@ -27,6 +28,8 @@ import GamePhysicsSim.NN as NN
 # keras
 import tensorflow as tf
 from tensorflow import keras
+
+tf.keras.backend.set_floatx('float64')
 
 # third party keras related software
 from KerasGA import GeneticAlgorithm
@@ -42,18 +45,6 @@ from KerasGA import GeneticAlgorithm
 ########################################################################################
 # the code using KerasGA GeneticAlgorithm uses example code from https://github.com/yahiakr/KerasGA
 ########################################################################################
-
-AngularDrag = conf['AngularDrag']
-AngularFriction = conf['AngularFriction']
-Drag = conf['AirDrag']
-Friction = conf['Friction']
-N = 12 # number of pods
-M = 8 # number of checkpoints
-# Sizes
-X = 800
-Y = 800
-PODSIZE = (30,30)
-CheckPointSize = 20
 
 def CheckPointCheck(pod,CheckPointSize):
     return np.linalg.norm(pod.dest - pod.pos) < CheckPointSize
@@ -80,8 +71,9 @@ def initiate_pods(modelList):
     # podList = []
     for model in modelList:
         pod = PodClass.Pod(pos0 = pod_pos_0, w0 = 0, v0 = conf['v0'], a0 = conf['a0'], alpha0 = 0, theta0 = theta0,
-                            m=conf['m_pod'], I=conf['I_pod'], TorqueMax = conf['TorqueMax'],
-                            ThrustMax = conf['ThrustMax'], vMin = conf['vMin'], wMin = conf['wMin'])
+                            m=conf['m_pod'], I=conf['I_pod'], TorqueMax = conf['TorqueMax'], model=model,
+                            ThrustMax = conf['ThrustMax'], vMin = conf['vMin'], wMin = conf['wMin'], wMax = conf['wMax'])
+
         podList.append(pod)
         IDList.append(pod.ID)
         pod.model = model
@@ -107,9 +99,13 @@ def update(t):
         if (t%delta_t) == 0:
             x = scaler.transform(np.array([pod.getPodSteeringStats(delta_t=delta_t)]))
             pod.NN_getSteering(x)
-            # Thrust,Torque = pod.NN_getSteering(x)
-        pod.Rotate(Torque = pod.Torque, AngularDrag = AngularDrag, AngularFriction = AngularFriction, dt = dt)
-        pod.Move(Thrust = pod.Thrust, Drag = Drag, Friction = Friction, dt = dt)
+
+        pod.AddThrust(Thrust = pod.Thrust)
+        pod.AddTorque(Torque = pod.Torque)
+
+        pod.Rotate(AngularDrag = AngularDrag, AngularFriction = AngularFriction, dt = dt)
+        pod.Move(Drag = Drag, Friction = Friction, dt = dt)
+
         if CheckPointCheck(pod,CheckPointSize):
             # doneCheckPoints = 1+(math.ceil(pod.fitnessScore) % M )
             pod.doneCheckpoints += 1
@@ -176,104 +172,66 @@ def runSim(gen,modNr,savepath):
     writervideo = animation.FFMpegWriter(fps=30)
     anim = FuncAnimation(fig,update,frames = t)
     # set_trace()
-    anim.save(savepath+'/Model'+str(modNr)+'_Gen'+str(gen)+'.mp4', writer=writervideo)
+    anim.save(savepath+f'/Model{modNr}_Gen{gen}_single.mp4', writer=writervideo)
 
 
 def saveChildren(children,savepath,gen,modNr):
     for j,child in enumerate(children):
         child.save(savepath+'/Model'+str(modNr)+'_Gen'+str(gen)+'_'+str(j))
 
-profile=False
+if __name__ == "__main__":
 
-dt = 0.05
-delta_t = 0.1
-tMax = 200
+    ############### set some constants and import settings from the config file
 
-IDList = []
-checkpointList = []
-podList = []
+    dt = conf['dt']
+    delta_t = dt*3
+    tMax = 15
 
-savepath = '/home/bjornah/Projects/GPE/csb/Models/conf1'
-modNr = 5
-gen_0 = 0
+    AngularDrag = conf['AngularDrag']
+    AngularFriction = conf['AngularFriction']
+    Drag = conf['AirDrag']
+    Friction = conf['Friction']
+    N = 1 # number of pods
+    M = 10 # number of checkpoints
+    # Sizes
+    X = 800
+    Y = 800
+    PODSIZE = (30,30)
+    CheckPointSize = 20
 
-scalerPath = '/home/bjornah/Projects/GPE/csb/DataScalers/scaler_Model5.pkl'
-scaler = pickle.load(open(scalerPath, 'rb'))
+    IDList = []
+    checkpointList = []
+    podList = []
 
-# initialise models
-model_0 = keras.models.load_model(savepath+'/Model'+str(modNr)+'_Gen'+str(gen_0),compile=False)
-GA = GeneticAlgorithm(model_0, population_size = N, selection_rate = 0.2, mutation_rate = 0.1)
-# population = GA.initial_population()
-# set_trace()
+    ############################
 
-modelList = []
-for i in range(N):
-    # model = keras.models.load_model(f'{savepath}/Model{modNr}_Gen{gen_0}',compile=False)
-    # model = keras.models.clone_model(model0)
-    if i==0:
-        model = model_0
-    if i>0:
-        model = NN.PerturbModelWeights(model_0, epsilon = 0.2)
+    profile=False
 
-    modelList.append(model)
-# saveChildren(modelList,savepath,gen_0,modNr)
+    savepath = os.path.join(ROOT_DIR,f'Models/{conf["conf_version"]}/sim_results')
+    if not os.path.exists(savepath):
+        os.makedirs(savepath)
 
+    data_scaler_path = os.path.join(ROOT_DIR,f'Models/{conf["conf_version"]}/DataScalers')
+    scaler_file = os.path.join(data_scaler_path,'scaler_x.pkl')
+    scaler = pickle.load(open(scaler_file, 'rb'))
 
-################## profiling
-if profile==True:
-    pr = cProfile.Profile()
-    pr.enable()
+    modNr = 2
+    gen = 0
+    model_save_path = os.path.join(ROOT_DIR,f'Models/{conf["conf_version"]}')
+    mod_file = os.path.join(model_save_path,f'Model{modNr}_Gen{gen}')
 
-generations = 100
-generateCheckpoints()
-for gen in range(1,generations+1):
+    # initialise models
+    model = keras.models.load_model(mod_file,compile=False)
+
+    modelList = [model]
+
     reset_lists()
     initiate_pods(modelList)
-    if gen%5==0:
-        checkpointList[:] = []
-        generateCheckpoints()
+    generateCheckpoints()
     setCheckpoints()
     print('simulation starts')
+
     runSim(gen,modNr,savepath)
 
-    population = []
-    scores = []
-    for pod in podList:
-        pod.fitnessScore = pod.doneCheckpoints + (1 - min(1, np.linalg.norm(pod.dest - pod.pos) / (np.sqrt(X**2 + Y**2)/2) ))
-        population.append(pod.model.get_weights())
-        scores.append(pod.fitnessScore)
 
-    # set_trace()
-
-    top_performers = GA.strongest_parents(population,scores)
-    pairs = []
-    while len(pairs) != GA.population_size:
-    	pairs.append( GA.pair(top_performers) )
-
-    # Crossover:
-    base_offsprings =  []
-    for pair in pairs:
-    	offsprings = GA.crossover(pair[0][0], pair[1][0])
-    	# 'offsprings' contains two chromosomes
-    	base_offsprings.append(offsprings[-1])
-
-    # Mutation:
-    new_population = GA.mutation(base_offsprings)
-
-    next_generation_models = NN.GetNextGeneration(new_population = new_population, input_shape = (6,))
-    if (gen%10) == 0:
-        saveChildren(next_generation_models,savepath,gen,modNr)
-    modelList = next_generation_models
-
-if profile==True:
-    pr.disable()
-    s = io.StringIO()
-    sortby = SortKey.CUMULATIVE
-    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-    ps.print_stats()
-    # print(s.getvalue())
-    with open('profile.txt','w') as fo:
-        fo.write(s.getvalue())
-##################
-
-print('done with all generations')
+    print('done with all generations')

@@ -10,7 +10,6 @@ import pygame
 import random
 import pandas as pd
 
-
 FPS = 30
 dt = conf['dt']
 AngularDrag = conf['AngularDrag']
@@ -142,7 +141,6 @@ while t<tMax: # the main game loop
             Visualise.blitRotate(DISPLAYSURF, podImgList[i], surface_pivot, image_pivot, -angle)
     pygame.display.update()
     fpsClock.tick(FPS)
-
 
 pygame.display.quit()
 pygame.quit()

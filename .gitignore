@@ -5,6 +5,7 @@ __pycache__/
 
 # Certain folders
 GamePhysicsSim/old/
+Models/*/sim_results/
 old/
 
 # C extensions
