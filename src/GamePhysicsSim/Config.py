@@ -1,4 +1,8 @@
 import numpy as np
+import os
+
+ROOT_DIR = os.path.dirname('/'.join(os.path.abspath(__file__).split('/')[:-2]))
+
 
 conf = {
 # Clock and FPS
@@ -23,7 +27,7 @@ conf = {
 'wMax' : 200./360*2*np.pi, # maximum angular velocity in radians per second
 'v0'   : np.array([0,0]),
 'a0'   : np.array([0,0]),
-'imgFile1' : '/Users/bjornah/Documents/Privat/Projects/codingames/csb/SpaceShip2.png'
+'conf_version': 'conf1'
 }
 
 conf['I_pod'] = 0.5 * conf['m_pod'] * conf['r_pod']**2

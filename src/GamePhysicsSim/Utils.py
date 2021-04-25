@@ -96,4 +96,9 @@ def sigmoid(X):
 
 def CheckPointCheck(pod,CheckPointSize):
     return np.linalg.norm(pod.dest - pod.pos) < CheckPointSize
-    
+
+def calculateFitness(fitness,tMax):
+    fitnessScore = {}
+    for ID,scoreData in fitness.items():
+        fitnessScore[ID] = len(scoreData)-1 - sigmoid(scoreData[-1]/tMax)
+    return fitnessScore

@@ -1,8 +1,9 @@
 import GamePhysicsSim.Utils as Utils
 import GamePhysicsSim.Pod as PodClass
-from GamePhysicsSim.Config import conf
+from GamePhysicsSim.Config import conf, ROOT_DIR
 import numpy as np
 import sys
+import os
 import pygame
 
 #############
@@ -227,6 +228,7 @@ def run_mouse_control_PID_steering(imgFile,conf):
 
 
 if __name__ == "__main__":
-    imgFile = '../images/SpaceShip2.png'
+    # imgFile = '../images/SpaceShip2.png'
+    imgFile = os.path.join(ROOT_DIR,'images/SpaceShip2.png')
     run_mouse_control_PID_steering(imgFile,conf)
     # RunManualControl(imgFile,conf)
