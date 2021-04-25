@@ -1,10 +1,10 @@
 import setuptools
 
-with open("README.md", "r") as fh:
+with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="GamePhysicsSim", # Replace with your own username
+    name="GamePhysicsSim",
     version="0.1",
     author="Bjorn Ahlgren",
     author_email="bjornah@kth.se",
@@ -12,11 +12,12 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/bjornah/GamePhysicsSim",
-    packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3.7",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: GNU GPLv3",
         "Operating System :: MacOS",
     ],
-    python_requires='>=3.5',
+    package_dir={"": "src"},
+    packages=setuptools.find_packages(where="src"),
+    python_requires=">=3.7",
 )
