@@ -84,7 +84,6 @@ Scripts/
 ### TO DO:
 - Clean up further in code.
 - [] Improve training of NN to PID controller.
-- [] Add Visualisation example to GitHub README.
 - [] Add tests.
 - [] Test out auto sklearn for a more optimised NN architecture and hyperparameters.
 - [] Change name.
@@ -96,3 +95,4 @@ Scripts/
 - [x] Implement PID controller to move pod between checkpoints and tune it to a degree where it works.
 - [x] Train a neural network to mimic the PID controller.
 - [x] Add non-pygame based visualisation of NN run
+- [x] Add Visualisation example to GitHub README.
