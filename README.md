@@ -12,6 +12,13 @@ See goals further down for the plan with respect to future improvements and idea
 Spaceships images for visualisations (found in Images/) are designed by freepik (www.freepik.com).
 
 ----------------------------
+Example of NN trained on PID controller:
+
+https://user-images.githubusercontent.com/17022962/116131822-25f12800-a6cd-11eb-80db-95b82e196f5a.mov
+
+
+
+----------------------------
 
 module Files:
 
