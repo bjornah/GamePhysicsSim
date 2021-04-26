@@ -184,7 +184,7 @@ if __name__ == "__main__":
     ############### set some constants and import settings from the config file
 
     dt = conf['dt']
-    delta_t = dt*3
+    delta_t = dt
     tMax = 15
 
     AngularDrag = conf['AngularDrag']

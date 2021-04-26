@@ -14,7 +14,9 @@ Spaceships images for visualisations (found in Images/) are designed by freepik 
 ----------------------------
 
 module Files:
+
 src/GamePhysicsSim/
+
     __init__.py
         package init file
 
@@ -39,14 +41,23 @@ src/GamePhysicsSim/
         Running Visualise.py opens a manual control window. Good for gauging the current physics settings.
 
 Scripts/
+
     PID_run.py
         Runs a simulation where M pods race through a track of N checkpoints, where the steering is governed by a PID regulator for the Torque and a distance based function for the Thrust. If this automatic steering is sufficiently well calibrated you can use the output from one of these runs to train the AI.
+
+    Train_NN.py
+        Trains a NN defined in the script, using regular old back propagation, on the training data supplied by PID_run.py and saves the resuling model.
 
     RunGA.py
         Runs simulations using genetic algorithms with the GeneticAlgorithm package. Also saves films of each generation. Starts from a new model (i.e. generation 0). The example here starts from a model that has been trained the regular way against a PID.
 
     test_NN_model.py
         Runs pygame based animation of a neural network trained on the PID controller.
+
+    RunSimModel_i.py
+        Runs matplotlib based animation of a neural network trained on the PID controller. This script saves the result as a .mp4 file under videos/.
+
+
 
 ------------------------------
 

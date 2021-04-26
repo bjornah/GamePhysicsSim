@@ -21,9 +21,7 @@ from IPython.core.debugger import set_trace
 import GamePhysicsSim.Utils as Utils
 import GamePhysicsSim.Pod as PodClass
 from GamePhysicsSim.Config import conf,ROOT_DIR
-#import GamePhysicsSim.Visualise as Visualise
 import GamePhysicsSim.NN as NN
-# from GamePhysicsSim.Utils import profile
 
 # keras
 import tensorflow as tf
@@ -31,34 +29,10 @@ from tensorflow import keras
 
 tf.keras.backend.set_floatx('float64')
 
-# third party keras related software
-from KerasGA import GeneticAlgorithm
-
-
-# sklearn
-# from tensorflow.keras.wrappers.scikit_learn import KerasRegressor
-# from sklearn.preprocessing import StandardScaler
-# from sklearn.pipeline import Pipeline
-# import sklearn
-# from sklearn import preprocessing
-
-########################################################################################
-# the code using KerasGA GeneticAlgorithm uses example code from https://github.com/yahiakr/KerasGA
-########################################################################################
 
 def CheckPointCheck(pod,CheckPointSize):
     return np.linalg.norm(pod.dest - pod.pos) < CheckPointSize
 
-# def calculateFitness(fitness,tMax):
-#     fitnessScore_model_list = []
-#     for ID,scoreData in fitness.items():
-#         fitnessScore = len(scoreData)-1 - Utils.sigmoid(scoreData[-1]/tMax)
-#         for pod in podList:
-#             if pod.ID == ID:
-#                 fitnessScore_model_list.append((pod.model.get_weights(),fitnessScore))
-#     return
-    # fitnessScore = [tuple(d) for d in {'a':1,'b':2}.items()]
-    # return fitnessScore
 
 def reset_lists():
     IDList[:] = []
@@ -77,11 +51,6 @@ def initiate_pods(modelList):
         podList.append(pod)
         IDList.append(pod.ID)
         pod.model = model
-    # initiate dict for fitnessScores
-    # for pod in podList:
-        # fitness[pod.ID] = [0]
-
-    # return podList
 
 def generateCheckpoints():
     CheckGen = zip(np.random.randint(X,size=M),np.random.randint(Y,size=M))
@@ -107,20 +76,13 @@ def update(t):
         pod.Move(Drag = Drag, Friction = Friction, dt = dt)
 
         if CheckPointCheck(pod,CheckPointSize):
-            # doneCheckPoints = 1+(math.ceil(pod.fitnessScore) % M )
             pod.doneCheckpoints += 1
             pod.setDest(checkpointList[(pod.doneCheckpoints % M)])
-            # pod.setDest(checkpointList[doneCheckPoints])
-            # pod.doneCheckpoints += 1 #= doneCheckPoints - Utils.sigmoid(t/tMax)
         pod.podpatch.center = tuple(pod.pos)
         FT = np.array([pod.Thrust*np.cos(pod.theta),pod.Thrust*np.sin(pod.theta)])*dt**2
         pod.accLine.set_data([pod.pos[0],pod.pos[0]+FT[0]],[pod.pos[1],pod.pos[1]+FT[1]])
         pod.velLine.set_data([pod.pos[0],pod.pos[0]+pod.v[0]],[pod.pos[1],pod.pos[1]+pod.v[1]])
         pod.destLine.set_data([pod.pos[0],pod.dest[0]],[pod.pos[1],pod.dest[1]])
-        # ax.plot([pod.pos[0],pod.dest[0]],[pod.pos[1],pod.dest[1]]) # goal vec
-        # FT = np.array([Thrust*np.cos(pod.theta),Thrust*np.sin(pod.theta)])
-        # ax.plot([pod.pos[0],pod.pos[0]+FT[0]],[pod.pos[1],pod.pos[0]+FT[0]]) # acc vec
-        # ax.plot([pod.pos[0],pod.pos[0]+pod.v[0]],[pod.pos[1],pod.pos[0]+pod.v[0]]) # v vec
     t+=dt
 
 # @profile(output_file='plot_bkg',sort_by='cumulative', lines_to_print=10, strip_dirs=True)
@@ -151,16 +113,6 @@ def addPodPatches(ax):
         velLine, = ax.plot([pod.pos[0],pod.pos[0]],[pod.pos[1],pod.pos[0]],color='purple')
         pod.velLine = velLine
     return ax
-    # ax.add_patch(destLine)
-    # destpatch = plt.Arrow(pod.pos[0],pod.pos[1], (pod.dest - pod.pos)[0], (pod.dest - pod.pos)[1], width=3.0,color='orange')
-    # destpatch = plt.Arrow((pod.pos), (pod.dest-pod.pos), width=1.0)
-    # pod.destpatch = destpatch
-    # ax.add_patch(destpatch)
-
-        # ax.plot([pod.pos[0],pod.dest[0]],[pod.pos[1],pod.dest[1]]) # goal vec
-        # FT = np.array([Thrust*np.cos(pod.theta),Thrust*np.sin(pod.theta)])
-        # ax.plot([pod.pos[0],pod.pos[0]+FT[0]],[pod.pos[1],pod.pos[0]+FT[0]]) # acc vec
-        # ax.plot([pod.pos[0],pod.pos[0]+pod.v[0]],[pod.pos[1],pod.pos[0]+pod.v[0]]) # v vec
 
 # @profile(output_file='runSim',sort_by='tottime', lines_to_print=100, strip_dirs=True)
 def runSim(gen,modNr,savepath):
@@ -175,9 +127,6 @@ def runSim(gen,modNr,savepath):
     anim.save(savepath+f'/Model{modNr}_Gen{gen}_single.mp4', writer=writervideo)
 
 
-def saveChildren(children,savepath,gen,modNr):
-    for j,child in enumerate(children):
-        child.save(savepath+'/Model'+str(modNr)+'_Gen'+str(gen)+'_'+str(j))
 
 if __name__ == "__main__":
 
@@ -207,7 +156,7 @@ if __name__ == "__main__":
 
     profile=False
 
-    savepath = os.path.join(ROOT_DIR,f'Models/{conf["conf_version"]}/sim_results')
+    savepath = os.path.join(ROOT_DIR,f'videos/{conf["conf_version"]}')
     if not os.path.exists(savepath):
         os.makedirs(savepath)
 
@@ -215,7 +164,7 @@ if __name__ == "__main__":
     scaler_file = os.path.join(data_scaler_path,'scaler_x.pkl')
     scaler = pickle.load(open(scaler_file, 'rb'))
 
-    modNr = 2
+    modNr = 1
     gen = 0
     model_save_path = os.path.join(ROOT_DIR,f'Models/{conf["conf_version"]}')
     mod_file = os.path.join(model_save_path,f'Model{modNr}_Gen{gen}')

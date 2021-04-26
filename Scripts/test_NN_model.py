@@ -46,7 +46,7 @@ AngularFriction = conf['AngularFriction']
 Drag = conf['AirDrag']
 Friction = conf['Friction']
 
-N = 5 # number of pods
+N = 3 # number of pods
 M = 10 # number of checkpoints
 
 # Sizes
@@ -152,9 +152,6 @@ while t<tMax: # the main game loop
             surface_pivot = pod_pos # the point around which we rotate, in the coordinate system of the screen
             Visualise.blitRotate(DISPLAYSURF, podImgList[i], surface_pivot, image_pivot, -angle)
     pygame.display.update()
-    if updateParamsNr%20==0:
-        print(t)
-        print(pod.Thrust)
     fpsClock.tick(FPS)
 
 end = time.time()
